@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - new laravel installation
 - laravel ide helper installed
 - changelog file added
+- tailwind support
+- vue installed
 ### Changed
 ### Removed
 ### Fixed
