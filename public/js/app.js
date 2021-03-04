@@ -3892,6 +3892,12 @@ __webpack_require__.r(__webpack_exports__);
 //
 //
 //
+//
+//
+//
+//
+//
+//
 
 
 
@@ -22489,10 +22495,26 @@ var render = function() {
         })
       ],
       2
-    )
+    ),
+    _vm._v(" "),
+    _vm._m(0)
   ])
 }
-var staticRenderFns = []
+var staticRenderFns = [
+  function() {
+    var _vm = this
+    var _h = _vm.$createElement
+    var _c = _vm._self._c || _h
+    return _c("div", { staticClass: "text-center text-gray-300 my-4" }, [
+      _vm._v("\n        © ToDo List.\n        Created by "),
+      _c(
+        "a",
+        { attrs: { href: "https://github.com/BazMaster", target: "_blank" } },
+        [_vm._v("BazMaster")]
+      )
+    ])
+  }
+]
 render._withStripped = true
 
 

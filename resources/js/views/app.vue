@@ -48,6 +48,7 @@
                    class="hover:underline" href="#">Unchecked</a>
             </div>
         </div>
+
         <div>
             <div v-if="Object.keys(rows).length === 0"
                  class="bg-yellow-100 border border-yellow-400 text-yellow-700 px-4 py-3 rounded relative" role="alert">
@@ -79,6 +80,11 @@
                     </svg>
                 </button>
             </div>
+        </div>
+
+        <div class="text-center text-gray-300 my-4">
+            &copy; ToDo List.
+            Created by <a href="https://github.com/BazMaster" target="_blank">BazMaster</a>
         </div>
     </div>
 </template>
