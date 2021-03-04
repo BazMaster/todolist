@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\TaskRequest;
 use App\Models\Task;
+use Auth;
 use Exception;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -26,6 +27,7 @@ class TaskController extends Controller
             ->when($filter === 'unchecked', function ($q) {
                 return $q->where('status', false);
             })
+            ->where('user_id', Auth::id())
             ->latest()->get();
 
         return response()->json($tasks);
@@ -40,7 +42,9 @@ class TaskController extends Controller
      */
     public function store(TaskRequest $request): JsonResponse
     {
-        $row = Task::create($request->validated());
+        $data = $request->validated();
+        $data['user_id'] = Auth::id();
+        $row = Task::create($data);
 
         if(!$row) {
             return response()->json(['status' => false], 400);
@@ -59,7 +63,9 @@ class TaskController extends Controller
      */
     public function update(TaskRequest $request, Task $task): JsonResponse
     {
-        $row = $task->update($request->validated());
+        $data = $request->validated();
+        $data['user_id'] = Auth::id();
+        $row = $task->update($data);
 
         if(!$row) {
             return response()->json(['status' => false], 400);
@@ -99,6 +105,7 @@ class TaskController extends Controller
 
         foreach($rows as $row) {
             $task = new Task();
+            $task->user_id = Auth::id();
             $task->title = $row['title'];
             $task->status = $row['status'];
             $task->offline = true;
