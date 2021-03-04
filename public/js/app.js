@@ -3970,43 +3970,20 @@ vue__WEBPACK_IMPORTED_MODULE_2__.default.use((vue_toast_notification__WEBPACK_IM
     deleteRow: function deleteRow(id) {
       var _this2 = this;
 
-      var conf = confirm('Do you confirm deleting the record?');
+      this.loading = true;
+      axios.get('/sanctum/csrf-cookie').then(function (response) {
+        _this2.offline = false;
+        axios["delete"](_this2.api + '/' + id).then(function (response) {
+          console.log('The entry was successfully deleted');
+          vue__WEBPACK_IMPORTED_MODULE_2__.default.$toast.success(response.data.message);
 
-      if (conf) {
-        this.loading = true;
-        axios.get('/sanctum/csrf-cookie').then(function (response) {
-          _this2.offline = false;
-          axios["delete"](_this2.api + '/' + id).then(function (response) {
-            console.log('The entry was successfully deleted');
-            vue__WEBPACK_IMPORTED_MODULE_2__.default.$toast.success(response.data.message);
-
-            _this2.getRows();
-          })["catch"](function (error) {
-            console.log('An error occurred');
-
-            if (error.response.status === 401) {
-              console.log('404 - Unauthorized');
-              _this2.unautorized = true;
-              var obj = _this2.rows;
-
-              for (var item in obj) {
-                if (obj[item].id === id) {
-                  delete obj[item];
-                }
-              }
-
-              _this2.rows = Object.assign({}, _this2.rows, obj);
-
-              _this2.syncStorage();
-            } else {
-              if (error.response.data.message) {
-                vue__WEBPACK_IMPORTED_MODULE_2__.default.$toast.error(error.response.data.message);
-              }
-            }
-          });
+          _this2.getRows();
         })["catch"](function (error) {
-          if (!error.response) {
-            _this2.offline = true;
+          console.log('An error occurred');
+
+          if (error.response.status === 401) {
+            console.log('404 - Unauthorized');
+            _this2.unautorized = true;
             var obj = _this2.rows;
 
             for (var item in obj) {
@@ -4019,12 +3996,31 @@ vue__WEBPACK_IMPORTED_MODULE_2__.default.use((vue_toast_notification__WEBPACK_IM
 
             _this2.syncStorage();
           } else {
-            var code = error.response.status;
-            var response = error.response.data;
-            console.log(code, response);
+            if (error.response.data.message) {
+              vue__WEBPACK_IMPORTED_MODULE_2__.default.$toast.error(error.response.data.message);
+            }
           }
         });
-      }
+      })["catch"](function (error) {
+        if (!error.response) {
+          _this2.offline = true;
+          var obj = _this2.rows;
+
+          for (var item in obj) {
+            if (obj[item].id === id) {
+              delete obj[item];
+            }
+          }
+
+          _this2.rows = Object.assign({}, _this2.rows, obj);
+
+          _this2.syncStorage();
+        } else {
+          var code = error.response.status;
+          var response = error.response.data;
+          console.log(code, response);
+        }
+      });
     },
     submitItem: function submitItem() {
       var _this3 = this;
@@ -4120,7 +4116,6 @@ vue__WEBPACK_IMPORTED_MODULE_2__.default.use((vue_toast_notification__WEBPACK_IM
           _this4.getRows();
 
           console.log('The task was successfully changed');
-          vue__WEBPACK_IMPORTED_MODULE_2__.default.$toast.success(response.data.message);
         })["catch"](function (error) {
           console.log('An error occurred');
 
@@ -22237,6 +22232,7 @@ var render = function() {
               "a",
               {
                 staticClass: "underline hover:no-underline",
+                attrs: { href: "#" },
                 on: {
                   click: function($event) {
                     $event.preventDefault()

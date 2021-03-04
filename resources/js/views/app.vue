@@ -15,7 +15,7 @@
              class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded relative"
              role="alert">
             Some tasks are not saved.
-            <a @click.prevent="saveStorage" class="underline hover:no-underline">
+            <a @click.prevent="saveStorage" href="#" class="underline hover:no-underline">
                 Sync?
             </a>
         </div>
@@ -319,7 +319,6 @@ export default {
                         this.getRows();
 
                         console.log('The task was successfully changed');
-                        Vue.$toast.success(response.data.message)
                     })
                     .catch(error => {
                         console.log('An error occurred');
