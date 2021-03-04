@@ -15,10 +15,6 @@ use App\Http\Controllers\TaskController;
 |
 */
 
-Route::middleware('auth:api')->get('/user', function (Request $request) {
-    return $request->user();
-});
-
 Route::middleware('auth:sanctum')->group(function () {
     Route::resource('/tasks', TaskController::class)->except(['create', 'edit', 'show']);
     Route::post('/tasks/saveStorage', [TaskController::class, 'saveStorage']);

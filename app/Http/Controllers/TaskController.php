@@ -97,7 +97,12 @@ class TaskController extends Controller
         return response()->json(['status' => false, 'message' => 'Task is not completed'], 400);
     }
 
-
+    /**
+     * Saving tasks in database from local storage
+     * @param Request $request
+     *
+     * @return mixed
+     */
     public function saveStorage(Request $request) {
         $request->validate(['rows' => 'required']);
 
