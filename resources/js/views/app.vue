@@ -168,62 +168,58 @@ export default {
         },
 
         deleteRow(id) {
-            let conf = confirm('Do you confirm deleting the record?');
-            if(conf) {
-                this.loading = true;
+            this.loading = true;
 
-                axios.get('/sanctum/csrf-cookie').then(response => {
-                    this.offline = false;
-                    axios
-                        .delete(this.api + '/' + id)
-                        .then(response => {
-                            console.log('The entry was successfully deleted');
-                            Vue.$toast.success(response.data.message)
-                            this.getRows();
-                        })
-                        .catch(error => {
-                            console.log('An error occurred');
+            axios.get('/sanctum/csrf-cookie').then(response => {
+                this.offline = false;
+                axios
+                    .delete(this.api + '/' + id)
+                    .then(response => {
+                        console.log('The entry was successfully deleted');
+                        Vue.$toast.success(response.data.message)
+                        this.getRows();
+                    })
+                    .catch(error => {
+                        console.log('An error occurred');
 
-                            if(error.response.status === 401) {
-                                console.log('404 - Unauthorized');
-                                this.unautorized = true;
+                        if(error.response.status === 401) {
+                            console.log('404 - Unauthorized');
+                            this.unautorized = true;
 
-                                const obj = this.rows;
-                                for(let item in obj) {
-                                    if(obj[item].id === id) {
-                                        delete obj[item];
-                                    }
-                                }
-                                this.rows = Object.assign({}, this.rows, obj);
-                                this.syncStorage();
-                            }
-                            else {
-                                if(error.response.data.message) {
-                                    Vue.$toast.error(error.response.data.message)
+                            const obj = this.rows;
+                            for(let item in obj) {
+                                if(obj[item].id === id) {
+                                    delete obj[item];
                                 }
                             }
-                        })
-                    ;
-                }).catch(error => {
-                    if (!error.response) {
-                        this.offline = true;
-
-                        const obj = this.rows;
-                        for(let item in obj) {
-                            if(obj[item].id === id) {
-                                delete obj[item];
+                            this.rows = Object.assign({}, this.rows, obj);
+                            this.syncStorage();
+                        }
+                        else {
+                            if(error.response.data.message) {
+                                Vue.$toast.error(error.response.data.message)
                             }
                         }
-                        this.rows = Object.assign({}, this.rows, obj);
-                        this.syncStorage();
-                    } else {
-                        const code = error.response.status
-                        const response = error.response.data
-                        console.log(code, response);
-                    }
-                });
+                    })
+                ;
+            }).catch(error => {
+                if (!error.response) {
+                    this.offline = true;
 
-            }
+                    const obj = this.rows;
+                    for(let item in obj) {
+                        if(obj[item].id === id) {
+                            delete obj[item];
+                        }
+                    }
+                    this.rows = Object.assign({}, this.rows, obj);
+                    this.syncStorage();
+                } else {
+                    const code = error.response.status
+                    const response = error.response.data
+                    console.log(code, response);
+                }
+            });
         },
 
         submitItem() {

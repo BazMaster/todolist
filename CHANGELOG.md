@@ -15,9 +15,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Unauthorized mode
 - Offline mode
 - Sync with Local Storage
+- copyright data in footer
 ### Changed
 ### Removed
+- confirmation removed
 ### Fixed
+- design of navigation links
 ### Security
 - laravel breeze installed
 - laravel sanctum installed
