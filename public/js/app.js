@@ -3867,6 +3867,31 @@ __webpack_require__.r(__webpack_exports__);
 //
 //
 //
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
 
 
 
@@ -3878,9 +3903,12 @@ vue__WEBPACK_IMPORTED_MODULE_2__.default.use((vue_toast_notification__WEBPACK_IM
       row: {
         id: '',
         title: '',
-        status: false
+        status: false,
+        offline: false
       },
       filter: '',
+      unautorized: false,
+      offline: false,
       loading: false,
       loading_form: false,
       api: '/api/tasks'
@@ -3889,22 +3917,48 @@ vue__WEBPACK_IMPORTED_MODULE_2__.default.use((vue_toast_notification__WEBPACK_IM
   mounted: function mounted() {
     this.getRows();
   },
+  computed: {
+    hasOfflineTasks: function hasOfflineTasks() {
+      return !!localStorage.getItem('todo_list');
+    }
+  },
   methods: {
     getRows: function getRows() {
       var _this = this;
 
       this.loading = true;
-      axios.get(this.api, {
-        params: {
-          filter: this.filter
-        }
-      }).then(function (response) {
-        _this.rows = response.data;
-        console.log(response);
+      axios.get('/sanctum/csrf-cookie').then(function (response) {
+        _this.offline = false;
+        axios.get(_this.api, {
+          params: {
+            filter: _this.filter
+          }
+        }).then(function (response) {
+          _this.rows = response.data;
+          _this.unautorized = false;
+          console.log(response);
+        })["catch"](function (error) {
+          console.log(error);
+          _this.unautorized = true;
+
+          if (localStorage.getItem('todo_list')) {
+            _this.rows = JSON.parse(localStorage.getItem('todo_list'));
+          }
+        })["finally"](function () {
+          return _this.loading = false;
+        });
       })["catch"](function (error) {
-        console.log(error);
-      })["finally"](function () {
-        return _this.loading = false;
+        if (!error.response) {
+          _this.offline = true;
+
+          if (localStorage.getItem('todo_list')) {
+            _this.rows = JSON.parse(localStorage.getItem('todo_list'));
+          }
+        } else {
+          var code = error.response.status;
+          var response = error.response.data;
+          console.log(code, response);
+        }
       });
     },
     deleteRow: function deleteRow(id) {
@@ -3914,16 +3968,54 @@ vue__WEBPACK_IMPORTED_MODULE_2__.default.use((vue_toast_notification__WEBPACK_IM
 
       if (conf) {
         this.loading = true;
-        axios["delete"](this.api + '/' + id).then(function (response) {
-          console.log('The entry was successfully deleted');
-          vue__WEBPACK_IMPORTED_MODULE_2__.default.$toast.success(response.data.message);
+        axios.get('/sanctum/csrf-cookie').then(function (response) {
+          _this2.offline = false;
+          axios["delete"](_this2.api + '/' + id).then(function (response) {
+            console.log('The entry was successfully deleted');
+            vue__WEBPACK_IMPORTED_MODULE_2__.default.$toast.success(response.data.message);
 
-          _this2.getRows();
+            _this2.getRows();
+          })["catch"](function (error) {
+            console.log('An error occurred');
+
+            if (error.response.status === 401) {
+              console.log('404 - Unauthorized');
+              _this2.unautorized = true;
+              var obj = _this2.rows;
+
+              for (var item in obj) {
+                if (obj[item].id === id) {
+                  delete obj[item];
+                }
+              }
+
+              _this2.rows = Object.assign({}, _this2.rows, obj);
+
+              _this2.syncStorage();
+            } else {
+              if (error.response.data.message) {
+                vue__WEBPACK_IMPORTED_MODULE_2__.default.$toast.error(error.response.data.message);
+              }
+            }
+          });
         })["catch"](function (error) {
-          console.log('An error occurred');
+          if (!error.response) {
+            _this2.offline = true;
+            var obj = _this2.rows;
 
-          if (error.response.data.message) {
-            vue__WEBPACK_IMPORTED_MODULE_2__.default.$toast.error(error.response.data.message);
+            for (var item in obj) {
+              if (obj[item].id === id) {
+                delete obj[item];
+              }
+            }
+
+            _this2.rows = Object.assign({}, _this2.rows, obj);
+
+            _this2.syncStorage();
+          } else {
+            var code = error.response.status;
+            var response = error.response.data;
+            console.log(code, response);
           }
         });
       }
@@ -3933,29 +4025,80 @@ vue__WEBPACK_IMPORTED_MODULE_2__.default.use((vue_toast_notification__WEBPACK_IM
 
       this.loading_form = true;
       console.log('add');
-      axios.post(this.api, this.row).then(function (response) {
-        console.log(response);
+      axios.get('/sanctum/csrf-cookie').then(function (response) {
+        _this3.offline = false;
+        axios.post(_this3.api, _this3.row).then(function (response) {
+          console.log(response);
 
-        _this3.formClearFields();
+          _this3.formClearFields();
 
-        _this3.getRows();
+          _this3.getRows();
 
-        console.log('The entry was successfully added');
-        vue__WEBPACK_IMPORTED_MODULE_2__.default.$toast.success(response.data.message);
-      })["catch"](function (error) {
-        console.log('An error occurred');
+          console.log('The entry was successfully added');
+          vue__WEBPACK_IMPORTED_MODULE_2__.default.$toast.success(response.data.message);
+        })["catch"](function (error) {
+          console.log('An error occurred');
+          console.log(error);
 
-        if (error.response.data.message) {
-          vue__WEBPACK_IMPORTED_MODULE_2__.default.$toast.error(error.response.data.message);
-        } else if (Object.keys(error.response.data.errors).length) {
-          var errors = Object.values(error.response.data.errors).join(', ');
+          if (error.response.status === 401) {
+            console.log('404 - Unauthorized');
+            _this3.unautorized = true;
 
-          if (errors) {
-            vue__WEBPACK_IMPORTED_MODULE_2__.default.$toast.error(errors);
+            if (_this3.row.title) {
+              var obj = {};
+              var count = Object.keys(_this3.rows).length;
+              obj[count] = {
+                id: count + 1,
+                title: _this3.row.title,
+                status: false,
+                offline: false
+              };
+              _this3.rows = Object.assign({}, _this3.rows, obj);
+
+              _this3.formClearFields();
+
+              _this3.syncStorage();
+            }
+          } else {
+            if (error.response.data.message) {
+              vue__WEBPACK_IMPORTED_MODULE_2__.default.$toast.error(error.response.data.message);
+            } else if (Object.keys(error.response.data.errors).length) {
+              var errors = Object.values(error.response.data.errors).join(', ');
+
+              if (errors) {
+                vue__WEBPACK_IMPORTED_MODULE_2__.default.$toast.error(errors);
+              }
+            }
           }
+
+          console.log(error.response);
+        })["finally"](function () {
+          return _this3.loading_form = false;
+        });
+      })["catch"](function (error) {
+        if (!error.response) {
+          _this3.offline = true;
+
+          if (_this3.row.title) {
+            var obj = {};
+            var count = Object.keys(_this3.rows).length;
+            obj[count] = {
+              id: count + 1,
+              title: _this3.row.title,
+              status: false,
+              offline: false
+            };
+            _this3.rows = Object.assign({}, _this3.rows, obj);
+
+            _this3.formClearFields();
+
+            _this3.syncStorage();
+          }
+        } else {
+          var code = error.response.status;
+          var response = error.response.data;
+          console.log(code, response);
         }
-      })["finally"](function () {
-        return _this3.loading_form = false;
       });
     },
     editItem: function editItem(row) {
@@ -3963,54 +4106,104 @@ vue__WEBPACK_IMPORTED_MODULE_2__.default.use((vue_toast_notification__WEBPACK_IM
 
       this.loading_form = true;
       console.log('edit');
-      axios.put(this.api + '/' + row.id, row).then(function (response) {
-        console.log(response);
+      axios.get('/sanctum/csrf-cookie').then(function (response) {
+        _this4.offline = false;
+        axios.put(_this4.api + '/' + row.id, row).then(function (response) {
+          console.log(response);
 
-        _this4.getRows();
+          _this4.getRows();
 
-        console.log('The task was successfully changed');
-        vue__WEBPACK_IMPORTED_MODULE_2__.default.$toast.success(response.data.message);
-      })["catch"](function (error) {
-        console.log('An error occurred');
+          console.log('The task was successfully changed');
+          vue__WEBPACK_IMPORTED_MODULE_2__.default.$toast.success(response.data.message);
+        })["catch"](function (error) {
+          console.log('An error occurred');
 
-        if (error.response.data.message) {
-          vue__WEBPACK_IMPORTED_MODULE_2__.default.$toast.error(error.response.data.message);
-        } else if (Object.keys(error.response.data.errors).length) {
-          var errors = Object.values(error.response.data.errors).join(', ');
+          if (error.response.status === 401) {
+            // console.log('404 - Unauthorized');
+            // this.unautorized = true;
+            //
+            // const obj = this.rows;
+            // for(let item in obj) {
+            //     if(obj[item].id === row.id) {
+            //         obj[item] = row;
+            //     }
+            // }
+            // this.rows = Object.assign({}, this.rows, obj);
+            _this4.syncStorage();
+          } else {
+            if (error.response.data.message) {
+              vue__WEBPACK_IMPORTED_MODULE_2__.default.$toast.error(error.response.data.message);
+            } else if (Object.keys(error.response.data.errors).length) {
+              var errors = Object.values(error.response.data.errors).join(', ');
 
-          if (errors) {
-            vue__WEBPACK_IMPORTED_MODULE_2__.default.$toast.error(errors);
+              if (errors) {
+                vue__WEBPACK_IMPORTED_MODULE_2__.default.$toast.error(errors);
+              }
+            }
           }
+        })["finally"](function () {
+          return _this4.loading_form = false;
+        });
+      })["catch"](function (error) {
+        if (!error.response) {
+          _this4.offline = true;
+
+          _this4.syncStorage();
+        } else {
+          var code = error.response.status;
+          var response = error.response.data;
+          console.log(code, response);
         }
-      })["finally"](function () {
-        return _this4.loading_form = false;
       });
     },
     formClearFields: function formClearFields() {
       this.row.id = '';
       this.row.title = '';
       this.row.status = false;
+      this.row.offline = false;
     },
     sendFilter: function sendFilter(filter) {
       this.filter = filter;
       this.getRows();
-    } // checkRow(row) {
-    //     console.log(row);
-    //
-    //     this.loading = true;
-    //     axios
-    //         .get(this.api + '/' + row.id + '/edit')
-    //         .then(response => {
-    //             console.log(response);
-    //             this.getRows();
-    //         })
-    //         .catch(error => {
-    //             console.log(error);
-    //         })
-    //     ;
-    //
-    // }
+    },
+    syncStorage: function syncStorage() {
+      localStorage.setItem('todo_list', JSON.stringify(this.rows));
+    },
+    saveStorage: function saveStorage() {
+      var _this5 = this;
 
+      var rows = localStorage.getItem('todo_list');
+      axios.get('/sanctum/csrf-cookie').then(function (response) {
+        _this5.offline = false;
+        axios.post(_this5.api + '/saveStorage', {
+          rows: rows
+        }).then(function (response) {
+          console.log(response);
+          localStorage.removeItem('todo_list');
+          _this5.hasOfflineTasks = false;
+          document.getElementById('sync').remove();
+
+          _this5.getRows();
+
+          console.log('The task was successfully changed');
+          vue__WEBPACK_IMPORTED_MODULE_2__.default.$toast.success(response.data.message);
+        })["catch"](function (error) {
+          console.log('An error occurred');
+
+          if (error.response.data.message) {
+            vue__WEBPACK_IMPORTED_MODULE_2__.default.$toast.error(error.response.data.message);
+          } else if (Object.keys(error.response.data.errors).length) {
+            var errors = Object.values(error.response.data.errors).join(', ');
+
+            if (errors) {
+              vue__WEBPACK_IMPORTED_MODULE_2__.default.$toast.error(errors);
+            }
+          }
+        })["finally"](function () {
+          return _this5.loading_form = false;
+        });
+      });
+    }
   }
 });
 
@@ -21990,6 +22183,67 @@ var render = function() {
   var _h = _vm.$createElement
   var _c = _vm._self._c || _h
   return _c("div", [
+    _vm.unautorized
+      ? _c(
+          "div",
+          {
+            staticClass:
+              "bg-blue-100 border border-blue-400 text-blue-700 px-4 py-3 rounded relative",
+            attrs: { role: "alert" }
+          },
+          [
+            _c("strong", { staticClass: "text-bold" }, [
+              _vm._v("Unauthorized")
+            ]),
+            _vm._v("\n        To save your tasks, please log in.\n    ")
+          ]
+        )
+      : _vm._e(),
+    _vm._v(" "),
+    _vm.offline
+      ? _c(
+          "div",
+          {
+            staticClass:
+              "bg-blue-100 border border-blue-400 text-blue-700 px-4 py-3 rounded relative",
+            attrs: { role: "alert" }
+          },
+          [
+            _c("strong", { staticClass: "text-bold" }, [
+              _vm._v("Offline mode!")
+            ]),
+            _vm._v("\n        Please check your internet connection.\n    ")
+          ]
+        )
+      : _vm._e(),
+    _vm._v(" "),
+    _vm.hasOfflineTasks && !_vm.unautorized && !_vm.offline
+      ? _c(
+          "div",
+          {
+            staticClass:
+              "bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded relative",
+            attrs: { id: "sync", role: "alert" }
+          },
+          [
+            _vm._v("\n        Some tasks are not saved.\n        "),
+            _c(
+              "a",
+              {
+                staticClass: "underline hover:no-underline",
+                on: {
+                  click: function($event) {
+                    $event.preventDefault()
+                    return _vm.saveStorage($event)
+                  }
+                }
+              },
+              [_vm._v("\n            Sync?\n        ")]
+            )
+          ]
+        )
+      : _vm._e(),
+    _vm._v(" "),
     _c("div", { staticClass: "mb-4" }, [
       _c(
         "form",
@@ -22041,183 +22295,200 @@ var render = function() {
         ]
       ),
       _vm._v(" "),
-      _c("div", { staticClass: "ml-4 mt-1 text-gray-500" }, [
-        _c(
-          "a",
-          {
-            staticClass: "hover:underline",
-            class: { "text-red-500 font-bold": _vm.filter === "" },
-            attrs: { href: "#" },
-            on: {
-              click: function($event) {
-                return _vm.sendFilter("")
-              }
-            }
-          },
-          [_vm._v("All")]
-        ),
-        _vm._v(" |\n            "),
-        _c(
-          "a",
-          {
-            staticClass: "hover:underline",
-            class: { "text-red-500 font-bold": _vm.filter === "checked" },
-            attrs: { href: "#" },
-            on: {
-              click: function($event) {
-                return _vm.sendFilter("checked")
-              }
-            }
-          },
-          [_vm._v("Checked")]
-        ),
-        _vm._v(" |\n            "),
-        _c(
-          "a",
-          {
-            staticClass: "hover:underline",
-            class: { "text-red-500 font-bold": _vm.filter === "unchecked" },
-            attrs: { href: "#" },
-            on: {
-              click: function($event) {
-                return _vm.sendFilter("unchecked")
-              }
-            }
-          },
-          [_vm._v("Unchecked")]
-        )
-      ])
+      !_vm.unautorized
+        ? _c("div", { staticClass: "ml-4 mt-1 text-gray-500" }, [
+            _c(
+              "a",
+              {
+                staticClass: "hover:underline",
+                class: { "text-red-500 font-bold": _vm.filter === "" },
+                attrs: { href: "#" },
+                on: {
+                  click: function($event) {
+                    return _vm.sendFilter("")
+                  }
+                }
+              },
+              [_vm._v("All")]
+            ),
+            _vm._v(" |\n            "),
+            _c(
+              "a",
+              {
+                staticClass: "hover:underline",
+                class: { "text-red-500 font-bold": _vm.filter === "checked" },
+                attrs: { href: "#" },
+                on: {
+                  click: function($event) {
+                    return _vm.sendFilter("checked")
+                  }
+                }
+              },
+              [_vm._v("Checked")]
+            ),
+            _vm._v(" |\n            "),
+            _c(
+              "a",
+              {
+                staticClass: "hover:underline",
+                class: { "text-red-500 font-bold": _vm.filter === "unchecked" },
+                attrs: { href: "#" },
+                on: {
+                  click: function($event) {
+                    return _vm.sendFilter("unchecked")
+                  }
+                }
+              },
+              [_vm._v("Unchecked")]
+            )
+          ])
+        : _vm._e()
     ]),
     _vm._v(" "),
     _c(
       "div",
-      _vm._l(_vm.rows, function(row) {
-        return _c(
-          "div",
-          {
-            key: row.id,
-            staticClass: "flex p-3 mb-4 rounded items-center hover:bg-gray-200",
-            class: { "opacity-50": row.status }
-          },
-          [
-            _c("input", {
-              directives: [
-                {
-                  name: "model",
-                  rawName: "v-model",
-                  value: row.status,
-                  expression: "row.status"
-                }
-              ],
-              staticClass:
-                "appearance-none checked:bg-blue-600 checked:border-transparent",
-              attrs: { type: "checkbox" },
-              domProps: {
-                checked: Array.isArray(row.status)
-                  ? _vm._i(row.status, null) > -1
-                  : row.status
+      [
+        Object.keys(_vm.rows).length === 0
+          ? _c(
+              "div",
+              {
+                staticClass:
+                  "bg-yellow-100 border border-yellow-400 text-yellow-700 px-4 py-3 rounded relative",
+                attrs: { role: "alert" }
               },
-              on: {
-                change: [
-                  function($event) {
-                    var $$a = row.status,
-                      $$el = $event.target,
-                      $$c = $$el.checked ? true : false
-                    if (Array.isArray($$a)) {
-                      var $$v = null,
-                        $$i = _vm._i($$a, $$v)
-                      if ($$el.checked) {
-                        $$i < 0 && _vm.$set(row, "status", $$a.concat([$$v]))
-                      } else {
-                        $$i > -1 &&
-                          _vm.$set(
-                            row,
-                            "status",
-                            $$a.slice(0, $$i).concat($$a.slice($$i + 1))
-                          )
-                      }
-                    } else {
-                      _vm.$set(row, "status", $$c)
-                    }
-                  },
-                  function($event) {
-                    return _vm.editItem(row)
-                  }
-                ]
-              }
-            }),
-            _vm._v(" "),
-            _c("p", { staticClass: "w-full mr-4 ml-1 text-gray-900" }, [
+              [_vm._v("\n            Your Todo List is empty!\n        ")]
+            )
+          : _vm._e(),
+        _vm._v(" "),
+        _vm._l(_vm.rows, function(row) {
+          return _c(
+            "div",
+            {
+              key: row.id,
+              staticClass:
+                "flex px-3 py-1 mb-0 rounded items-center hover:bg-gray-200",
+              class: { "opacity-50": row.status, "bg-blue-50": row.offline }
+            },
+            [
               _c("input", {
                 directives: [
                   {
                     name: "model",
                     rawName: "v-model",
-                    value: row.title,
-                    expression: "row.title"
+                    value: row.status,
+                    expression: "row.status"
                   }
                 ],
                 staticClass:
-                  "appearance-none shadow-none border-none rounded w-full py-2 px-3 bg-transparent focus:bg-white",
-                class: { "text-gray-500 line-through": row.status },
-                domProps: { value: row.title },
+                  "appearance-none checked:bg-blue-600 checked:border-transparent",
+                attrs: { type: "checkbox" },
+                domProps: {
+                  checked: Array.isArray(row.status)
+                    ? _vm._i(row.status, null) > -1
+                    : row.status
+                },
                 on: {
-                  change: function($event) {
-                    return _vm.editItem(row)
-                  },
-                  input: function($event) {
-                    if ($event.target.composing) {
-                      return
-                    }
-                    _vm.$set(row, "title", $event.target.value)
-                  }
-                }
-              })
-            ]),
-            _vm._v(" "),
-            row.status
-              ? _c(
-                  "button",
-                  {
-                    staticClass:
-                      "p-1 bg-red-500 text-white font-semibold rounded shadow-md hover:bg-red-700 focus:outline-none",
-                    attrs: { title: "Remove task" },
-                    on: {
-                      click: function($event) {
-                        return _vm.deleteRow(row.id)
-                      }
-                    }
-                  },
-                  [
-                    _c(
-                      "svg",
-                      {
-                        staticClass: "w-4 h-4",
-                        attrs: {
-                          xmlns: "http://www.w3.org/2000/svg",
-                          fill: "none",
-                          viewBox: "0 0 24 24",
-                          stroke: "currentColor"
+                  change: [
+                    function($event) {
+                      var $$a = row.status,
+                        $$el = $event.target,
+                        $$c = $$el.checked ? true : false
+                      if (Array.isArray($$a)) {
+                        var $$v = null,
+                          $$i = _vm._i($$a, $$v)
+                        if ($$el.checked) {
+                          $$i < 0 && _vm.$set(row, "status", $$a.concat([$$v]))
+                        } else {
+                          $$i > -1 &&
+                            _vm.$set(
+                              row,
+                              "status",
+                              $$a.slice(0, $$i).concat($$a.slice($$i + 1))
+                            )
                         }
-                      },
-                      [
-                        _c("path", {
-                          attrs: {
-                            "stroke-linecap": "round",
-                            "stroke-linejoin": "round",
-                            "stroke-width": "2",
-                            d: "M6 18L18 6M6 6l12 12"
-                          }
-                        })
-                      ]
-                    )
+                      } else {
+                        _vm.$set(row, "status", $$c)
+                      }
+                    },
+                    function($event) {
+                      return _vm.editItem(row)
+                    }
                   ]
-                )
-              : _vm._e()
-          ]
-        )
-      }),
-      0
+                }
+              }),
+              _vm._v(" "),
+              _c("p", { staticClass: "w-full mr-4 ml-1 text-gray-900" }, [
+                _c("input", {
+                  directives: [
+                    {
+                      name: "model",
+                      rawName: "v-model",
+                      value: row.title,
+                      expression: "row.title"
+                    }
+                  ],
+                  staticClass:
+                    "appearance-none shadow-none border-none rounded w-full py-2 px-3 bg-transparent focus:bg-white",
+                  class: { "text-gray-500 line-through": row.status },
+                  domProps: { value: row.title },
+                  on: {
+                    change: function($event) {
+                      return _vm.editItem(row)
+                    },
+                    input: function($event) {
+                      if ($event.target.composing) {
+                        return
+                      }
+                      _vm.$set(row, "title", $event.target.value)
+                    }
+                  }
+                })
+              ]),
+              _vm._v(" "),
+              row.status
+                ? _c(
+                    "button",
+                    {
+                      staticClass:
+                        "p-1 bg-red-500 text-white font-semibold rounded shadow-md hover:bg-red-700 focus:outline-none",
+                      attrs: { title: "Remove task" },
+                      on: {
+                        click: function($event) {
+                          return _vm.deleteRow(row.id)
+                        }
+                      }
+                    },
+                    [
+                      _c(
+                        "svg",
+                        {
+                          staticClass: "w-4 h-4",
+                          attrs: {
+                            xmlns: "http://www.w3.org/2000/svg",
+                            fill: "none",
+                            viewBox: "0 0 24 24",
+                            stroke: "currentColor"
+                          }
+                        },
+                        [
+                          _c("path", {
+                            attrs: {
+                              "stroke-linecap": "round",
+                              "stroke-linejoin": "round",
+                              "stroke-width": "2",
+                              d: "M6 18L18 6M6 6l12 12"
+                            }
+                          })
+                        ]
+                      )
+                    ]
+                  )
+                : _vm._e()
+            ]
+          )
+        })
+      ],
+      2
     )
   ])
 }

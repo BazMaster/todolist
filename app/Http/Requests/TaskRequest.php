@@ -25,7 +25,8 @@ class TaskRequest extends FormRequest
     {
         return [
             'title' => 'required|max:100',
-            'status' => 'boolean'
+            'status' => 'boolean',
+            'offline' => 'boolean',
         ];
     }
 }

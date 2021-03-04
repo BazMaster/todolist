@@ -19,7 +19,7 @@ Route::middleware('auth:api')->get('/user', function (Request $request) {
     return $request->user();
 });
 
-Route::resource('/tasks', TaskController::class)->except(['create', 'edit', 'show']);
-Route::get('/test', function () {
-    return 'test';
+Route::middleware('auth:sanctum')->group(function () {
+    Route::resource('/tasks', TaskController::class)->except(['create', 'edit', 'show']);
+    Route::post('/tasks/saveStorage', [TaskController::class, 'saveStorage']);
 });

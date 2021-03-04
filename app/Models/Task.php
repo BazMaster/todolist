@@ -37,6 +37,7 @@ class Task extends Model
     protected $fillable = [
         'title',
         'status',
+        'offline',
     ];
 
     /**
@@ -46,5 +47,6 @@ class Task extends Model
      */
     protected $casts = [
         'status' => 'boolean',
+        'offline' => 'boolean',
     ];
 }

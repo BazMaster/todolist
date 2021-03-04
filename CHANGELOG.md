@@ -11,6 +11,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - changelog file added
 - tailwind support
 - vue installed
+- Todo functionality
+- Unauthorized mode
+- Offline mode
+- Sync with Local Storage
 ### Changed
 ### Removed
 ### Fixed

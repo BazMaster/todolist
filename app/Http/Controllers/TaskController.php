@@ -90,4 +90,21 @@ class TaskController extends Controller
 
         return response()->json(['status' => false, 'message' => 'Task is not completed'], 400);
     }
+
+
+    public function saveStorage(Request $request) {
+        $request->validate(['rows' => 'required']);
+
+        $rows = json_decode($request->rows, true);
+
+        foreach($rows as $row) {
+            $task = new Task();
+            $task->title = $row['title'];
+            $task->status = $row['status'];
+            $task->offline = true;
+            $task->save();
+        }
+
+        return response()->json(['success' => true, 'message' => 'Offline tasks are synced successfully.']);
+    }
 }
