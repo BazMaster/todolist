@@ -1,5 +1,13 @@
+[![Heroku](https://heroku-badge.herokuapp.com/?app=heroku-badge)](https://frozen-tor-48003.herokuapp.com/)
+[![GitHub release Date](https://img.shields.io/github/release-date/BazMaster/todolist)](https://github.com/BazMaster/todolist/releases/)
+[![GitHub release](https://img.shields.io/github/v/release/BazMaster/todolist)](https://github.com/BazMaster/todolist/releases/)
+[![GitHub tag](https://img.shields.io/github/v/tag/BazMaster/todolist)](https://github.com/BazMaster/todolist/tags/)
+[![MIT license](https://img.shields.io/github/license/BazMaster/todolist)](https://github.com/BazMaster/todolist/blob/main/LICENSE.md)
+
+
 # ToDo List app
 
+- Demo: https://frozen-tor-48003.herokuapp.com/
 
 ## Install
 
