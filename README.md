@@ -41,7 +41,7 @@ php artisan serve
     - Working in "unauthorized mode" with Local Storage
     - Working in "offline mode" with Local Storage, when internet connection is interrupted
     - Authorization to save tasks in database
-    - Synchronisation database tasks with tasks from Local Storage
+    - Synchronization of tasks between the database and Local Storage
     
 ## API documentation (need user token from `personal_access_tokens` table)
 
